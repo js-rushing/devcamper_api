@@ -1,8 +1,12 @@
 "use strict";
 
+var path = require('path');
+
 var ErrorResponse = require('../utils/errorResponse');
 
 var asyncHandler = require('../middleware/async');
+
+var geocoder = require('../utils/geocoder');
 
 var Bootcamp = require('../models/Bootcamp'); // @desc        Get all bootcamps
 // @route       GET /api/v1/bootcamps
@@ -10,23 +14,13 @@ var Bootcamp = require('../models/Bootcamp'); // @desc        Get all bootcamps
 
 
 exports.getBootcamps = asyncHandler(function _callee(req, res, next) {
-  var bootcamps;
   return regeneratorRuntime.async(function _callee$(_context) {
     while (1) {
       switch (_context.prev = _context.next) {
         case 0:
-          _context.next = 2;
-          return regeneratorRuntime.awrap(Bootcamp.find());
+          res.status(200).json(res.advancedResults);
 
-        case 2:
-          bootcamps = _context.sent;
-          res.status(200).json({
-            success: true,
-            count: bootcamps.length,
-            data: bootcamps
-          });
-
-        case 4:
+        case 1:
         case "end":
           return _context.stop();
       }
@@ -142,7 +136,7 @@ exports.deleteBootcamp = asyncHandler(function _callee5(req, res, next) {
       switch (_context5.prev = _context5.next) {
         case 0:
           _context5.next = 2;
-          return regeneratorRuntime.awrap(Bootcamp.findByIdAndDelete(req.params.id));
+          return regeneratorRuntime.awrap(Bootcamp.findById(req.params.id));
 
         case 2:
           bootcamp = _context5.sent;
@@ -155,14 +149,158 @@ exports.deleteBootcamp = asyncHandler(function _callee5(req, res, next) {
           return _context5.abrupt("return", next(new ErrorResponse("Bootcamp not found with id of ".concat(req.params.id), 404)));
 
         case 5:
+          // using the remove() method rather than findByIdAndDelete()
+          //  allows of the use of the middleware in the Bootcamp model
+          //  which cascade deletes all of the associated courses and other
+          //  info along with the bootcamp
+          bootcamp.remove();
           res.status(200).json({
             success: true,
             data: {}
           });
 
-        case 6:
+        case 7:
         case "end":
           return _context5.stop();
+      }
+    }
+  });
+}); // @desc        Get bootcamps within a radius
+// @route       GET /api/v1/bootcamps/radius/:zipcode/:distance
+// @access      Private
+
+exports.getBootcampsInRadius = asyncHandler(function _callee6(req, res, next) {
+  var _req$params, zipcode, distance, loc, lat, lng, radius, bootcamps;
+
+  return regeneratorRuntime.async(function _callee6$(_context6) {
+    while (1) {
+      switch (_context6.prev = _context6.next) {
+        case 0:
+          _req$params = req.params, zipcode = _req$params.zipcode, distance = _req$params.distance; // Get lat/lng from geocoder
+
+          _context6.next = 3;
+          return regeneratorRuntime.awrap(geocoder.geocode(zipcode));
+
+        case 3:
+          loc = _context6.sent;
+          lat = loc[0].latitude;
+          lng = loc[0].longitude; // Calc radius using radians
+          // Divide distance by Earth's radius
+          // Earth's radius = 3,963 mi / 6,378 km
+
+          radius = distance / 3963;
+          _context6.next = 9;
+          return regeneratorRuntime.awrap(Bootcamp.find({
+            location: {
+              $geoWithin: {
+                $centerSphere: [[lng, lat], radius]
+              }
+            }
+          }));
+
+        case 9:
+          bootcamps = _context6.sent;
+          res.status(200).json({
+            success: true,
+            count: bootcamps.length,
+            data: bootcamps
+          });
+
+        case 11:
+        case "end":
+          return _context6.stop();
+      }
+    }
+  });
+}); // @desc        Upload photo for bootcamp
+// @route       DELETE /api/v1/bootcamps/:id/photo
+// @access      Private
+
+exports.bootcampPhotoUpload = asyncHandler(function _callee8(req, res, next) {
+  var bootcamp, file;
+  return regeneratorRuntime.async(function _callee8$(_context8) {
+    while (1) {
+      switch (_context8.prev = _context8.next) {
+        case 0:
+          _context8.next = 2;
+          return regeneratorRuntime.awrap(Bootcamp.findById(req.params.id));
+
+        case 2:
+          bootcamp = _context8.sent;
+
+          if (bootcamp) {
+            _context8.next = 5;
+            break;
+          }
+
+          return _context8.abrupt("return", next(new ErrorResponse("Bootcamp not found with id of ".concat(req.params.id), 404)));
+
+        case 5:
+          if (req.files) {
+            _context8.next = 7;
+            break;
+          }
+
+          return _context8.abrupt("return", next(new ErrorResponse("Please upload a file", 400)));
+
+        case 7:
+          file = req.files.file; // Make sure the image is a photo
+
+          if (file.mimetype.startsWith('image')) {
+            _context8.next = 10;
+            break;
+          }
+
+          return _context8.abrupt("return", next(new ErrorResponse("Please upload an image file", 400)));
+
+        case 10:
+          if (!(file.size > process.env.MAX_FILE_UPLOAD)) {
+            _context8.next = 12;
+            break;
+          }
+
+          return _context8.abrupt("return", next(new ErrorResponse("Image file size limit exceeded", 400)));
+
+        case 12:
+          // Custom file name to avoid overwriting
+          file.name = "photo_".concat(bootcamp._id).concat(path.parse(file.name).ext); // Upload file to file system
+
+          file.mv("".concat(process.env.FILE_UPLOAD_PATH, "/").concat(file.name), function _callee7(err) {
+            return regeneratorRuntime.async(function _callee7$(_context7) {
+              while (1) {
+                switch (_context7.prev = _context7.next) {
+                  case 0:
+                    if (!err) {
+                      _context7.next = 3;
+                      break;
+                    }
+
+                    console.error(err);
+                    return _context7.abrupt("return", next(new ErrorResponse("Problem uploading file", 500)));
+
+                  case 3:
+                    _context7.next = 5;
+                    return regeneratorRuntime.awrap(Bootcamp.findByIdAndUpdate(req.params.id, {
+                      photo: file.name
+                    }));
+
+                  case 5:
+                    res.status(200).json({
+                      success: true,
+                      data: file.name
+                    });
+
+                  case 6:
+                  case "end":
+                    return _context7.stop();
+                }
+              }
+            });
+          });
+
+        case 14:
+        case "end":
+          return _context8.stop();
       }
     }
   });

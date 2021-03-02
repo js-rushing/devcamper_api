@@ -1,5 +1,7 @@
 "use strict";
 
+var path = require('path');
+
 var express = require('express');
 
 var dotenv = require('dotenv');
@@ -7,6 +9,8 @@ var dotenv = require('dotenv');
 var morgan = require('morgan');
 
 var colors = require('colors');
+
+var fileupload = require('express-fileupload');
 
 var errorHandler = require('./middleware/error');
 
@@ -21,16 +25,23 @@ connectDB(); // Route files
 
 var bootcamps = require('./routes/bootcamps');
 
+var courses = require('./routes/courses');
+
 var app = express(); // Body parser
 
 app.use(express.json()); // Dev logging middleware 'morgan'
 
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
-} // Mount routers
+} // File uploading
 
 
-app.use('/api/v1/bootcamps', bootcamps); // Error Handler must be after Mount routers or won't catch
+app.use(fileupload()); // Set static folder
+
+app.use(express["static"](path.join(__dirname, 'public'))); // Mount routers
+
+app.use('/api/v1/bootcamps', bootcamps);
+app.use('/api/v1/courses', courses); // Error Handler must be after Mount routers or won't catch
 
 app.use(errorHandler);
 var PORT = process.env.PORT || 5000;

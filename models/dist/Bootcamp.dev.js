@@ -9,28 +9,28 @@ var geocoder = require('../utils/geocoder');
 var BootcampSchema = new mongoose.Schema({
   name: {
     type: String,
-    required: [true, 'Please add name'],
+    required: [true, 'Please add a name'],
     unique: true,
     trim: true,
-    maxlength: [50, 'Max length 50 characters']
+    maxlength: [50, 'Name can not be more than 50 characters']
   },
   slug: String,
   description: {
     type: String,
     required: [true, 'Please add a description'],
-    maxlength: [500, 'Max length 500 characters']
+    maxlength: [500, 'Description can not be more than 500 characters']
   },
   website: {
     type: String,
-    match: [/https?:\/\/(www\.)?[-a-zA-Z0-9@:&._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/, 'Please use a valid URL with HTTP or HTTPS']
+    match: [/https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/, 'Please use a valid URL with HTTP or HTTPS']
   },
   phone: {
     type: String,
-    maxlength: [20, 'Phone number no longer than 20 characters']
+    maxlength: [20, 'Phone number can not be longer than 20 characters']
   },
   email: {
     type: String,
-    match: [/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/, 'Please add a valid email address']
+    match: [/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/, 'Please add a valid email']
   },
   address: {
     type: String,
@@ -40,12 +40,10 @@ var BootcampSchema = new mongoose.Schema({
     // GeoJSON Point
     type: {
       type: String,
-      "enum": ['Point'] // required: true,
-
+      "enum": ['Point']
     },
     coordinates: {
       type: [Number],
-      // required: true,
       index: '2dsphere'
     },
     formattedAddress: String,
@@ -56,7 +54,7 @@ var BootcampSchema = new mongoose.Schema({
     country: String
   },
   careers: {
-    // Array of Strings
+    // Array of strings
     type: [String],
     required: true,
     "enum": ['Web Development', 'Mobile Development', 'UI/UX', 'Data Science', 'Business', 'Other']
@@ -64,7 +62,7 @@ var BootcampSchema = new mongoose.Schema({
   averageRating: {
     type: Number,
     min: [1, 'Rating must be at least 1'],
-    max: [10, 'Rating must not be more than 10']
+    max: [10, 'Rating must can not be more than 10']
   },
   averageCost: Number,
   photo: {
@@ -90,15 +88,24 @@ var BootcampSchema = new mongoose.Schema({
   createdAt: {
     type: Date,
     "default": Date.now
+  },
+  user: {
+    type: mongoose.Schema.ObjectId,
+    ref: 'User',
+    required: true
+  }
+}, {
+  toJSON: {
+    virtuals: true
+  },
+  toObject: {
+    virtuals: true
   }
 }); // Create bootcamp slug from the name
-// Don't use arrow function here because arrow functions
-// handle the 'this' differently
 
 BootcampSchema.pre('save', function (next) {
   this.slug = slugify(this.name, {
-    lower: true,
-    replacement: '_'
+    lower: true
   });
   next();
 }); // Geocode & create location field
@@ -134,5 +141,66 @@ BootcampSchema.pre('save', function _callee(next) {
       }
     }
   }, null, this);
+}); // Cascade delete courses when a bootcamp is deleted
+
+BootcampSchema.pre('remove', function _callee2(next) {
+  return regeneratorRuntime.async(function _callee2$(_context2) {
+    while (1) {
+      switch (_context2.prev = _context2.next) {
+        case 0:
+          console.log("Courses being removed from bootcamp ".concat(this._id));
+          _context2.next = 3;
+          return regeneratorRuntime.awrap(this.model('Course').deleteMany({
+            bootcamp: this._id
+          }));
+
+        case 3:
+          next();
+
+        case 4:
+        case "end":
+          return _context2.stop();
+      }
+    }
+  }, null, this);
+}); // Cascade delete courses when a bootcamp is deleted
+
+BootcampSchema.pre('remove', function _callee3(next) {
+  return regeneratorRuntime.async(function _callee3$(_context3) {
+    while (1) {
+      switch (_context3.prev = _context3.next) {
+        case 0:
+          _context3.next = 2;
+          return regeneratorRuntime.awrap(this.model('Course').deleteMany({
+            bootcamp: this._id
+          }));
+
+        case 2:
+        case "end":
+          return _context3.stop();
+      }
+    }
+  }, null, this);
+}); // Reverse populate with virtuals
+
+BootcampSchema.virtual('courses', {
+  ref: 'Course',
+  localField: '_id',
+  foreignField: 'bootcamp',
+  justOne: false
+}, {
+  toJSON: {
+    virtuals: true
+  },
+  toObject: {
+    virtuals: true
+  }
+}); // Reverse populate with virtuals
+
+BootcampSchema.virtual('courses', {
+  ref: 'Course',
+  localField: '_id',
+  foreignField: 'bootcamp',
+  justOne: false
 });
 module.exports = mongoose.model('Bootcamp', BootcampSchema);
