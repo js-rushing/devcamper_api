@@ -12,6 +12,8 @@ var colors = require('colors');
 
 var fileupload = require('express-fileupload');
 
+var cookieParser = require('cookie-parser');
+
 var errorHandler = require('./middleware/error');
 
 var connectDB = require('./config/db'); // Load env vars
@@ -27,9 +29,13 @@ var bootcamps = require('./routes/bootcamps');
 
 var courses = require('./routes/courses');
 
+var auth = require('./routes/auth');
+
 var app = express(); // Body parser
 
-app.use(express.json()); // Dev logging middleware 'morgan'
+app.use(express.json()); // Cookie parser
+
+app.use(cookieParser()); // Dev logging middleware 'morgan'
 
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
@@ -41,7 +47,8 @@ app.use(fileupload()); // Set static folder
 app.use(express["static"](path.join(__dirname, 'public'))); // Mount routers
 
 app.use('/api/v1/bootcamps', bootcamps);
-app.use('/api/v1/courses', courses); // Error Handler must be after Mount routers or won't catch
+app.use('/api/v1/courses', courses);
+app.use('/api/v1/auth', auth); // Error Handler must be after Mount routers or won't catch
 
 app.use(errorHandler);
 var PORT = process.env.PORT || 5000;

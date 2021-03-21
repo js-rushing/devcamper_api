@@ -71,17 +71,18 @@ exports.createBootcamp = asyncHandler(function _callee3(req, res, next) {
     while (1) {
       switch (_context3.prev = _context3.next) {
         case 0:
-          _context3.next = 2;
+          req.body.user = req.user._id;
+          _context3.next = 3;
           return regeneratorRuntime.awrap(Bootcamp.create(req.body));
 
-        case 2:
+        case 3:
           bootcamp = _context3.sent;
           res.status(201).json({
             success: true,
             data: bootcamp
           });
 
-        case 4:
+        case 5:
         case "end":
           return _context3.stop();
       }
