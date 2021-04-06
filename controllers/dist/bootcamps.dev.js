@@ -8,7 +8,10 @@ var asyncHandler = require('../middleware/async');
 
 var geocoder = require('../utils/geocoder');
 
-var Bootcamp = require('../models/Bootcamp'); // @desc        Get all bootcamps
+var Bootcamp = require('../models/Bootcamp');
+
+var _require = require('../models/Bootcamp'),
+    findByIdAndUpdate = _require.findByIdAndUpdate; // @desc        Get all bootcamps
 // @route       GET /api/v1/bootcamps
 // @access      Public
 
@@ -66,23 +69,41 @@ exports.getBootcamp = asyncHandler(function _callee2(req, res, next) {
 // @access      Private
 
 exports.createBootcamp = asyncHandler(function _callee3(req, res, next) {
-  var bootcamp;
+  var publishedBootcamp, bootcamp;
   return regeneratorRuntime.async(function _callee3$(_context3) {
     while (1) {
       switch (_context3.prev = _context3.next) {
         case 0:
-          req.body.user = req.user._id;
+          // Add user to request body
+          req.body.user = req.user.id; // Check for published bootcamp
+
           _context3.next = 3;
-          return regeneratorRuntime.awrap(Bootcamp.create(req.body));
+          return regeneratorRuntime.awrap(Bootcamp.findOne({
+            user: req.user.id
+          }));
 
         case 3:
+          publishedBootcamp = _context3.sent;
+
+          if (!(publishedBootcamp && req.user.role != 'admin')) {
+            _context3.next = 6;
+            break;
+          }
+
+          return _context3.abrupt("return", next(new ErrorResponse("The user with ID ".concat(req.user.id, " has already published a bootcamp"), 400)));
+
+        case 6:
+          _context3.next = 8;
+          return regeneratorRuntime.awrap(Bootcamp.create(req.body));
+
+        case 8:
           bootcamp = _context3.sent;
           res.status(201).json({
             success: true,
             data: bootcamp
           });
 
-        case 5:
+        case 10:
         case "end":
           return _context3.stop();
       }
@@ -99,10 +120,7 @@ exports.updateBootcamp = asyncHandler(function _callee4(req, res, next) {
       switch (_context4.prev = _context4.next) {
         case 0:
           _context4.next = 2;
-          return regeneratorRuntime.awrap(Bootcamp.findByIdAndUpdate(req.params.id, req.body, {
-            "new": true,
-            runValidators: true
-          }));
+          return regeneratorRuntime.awrap(Bootcamp.findById(req.params.id));
 
         case 2:
           bootcamp = _context4.sent;
@@ -115,12 +133,28 @@ exports.updateBootcamp = asyncHandler(function _callee4(req, res, next) {
           return _context4.abrupt("return", next(new ErrorResponse("Bootcamp not found with id of ".concat(req.params.id), 404)));
 
         case 5:
+          if (!(bootcamp.user.toString() !== req.user.id && req.user.role !== 'admin')) {
+            _context4.next = 7;
+            break;
+          }
+
+          return _context4.abrupt("return", next(new ErrorResponse("User ".concat(req.params.id, " is not authorized to update this bootcamp"), 401)));
+
+        case 7:
+          _context4.next = 9;
+          return regeneratorRuntime.awrap(Bootcamp.findByIdAndUpdate(req.params.id, req.body, {
+            "new": true,
+            runValidators: true
+          }));
+
+        case 9:
+          bootcamp = _context4.sent;
           res.status(200).json({
             success: true,
             data: bootcamp
           });
 
-        case 6:
+        case 11:
         case "end":
           return _context4.stop();
       }
@@ -150,6 +184,14 @@ exports.deleteBootcamp = asyncHandler(function _callee5(req, res, next) {
           return _context5.abrupt("return", next(new ErrorResponse("Bootcamp not found with id of ".concat(req.params.id), 404)));
 
         case 5:
+          if (!(bootcamp.user.toString() !== req.user.id && req.user.role !== 'admin')) {
+            _context5.next = 7;
+            break;
+          }
+
+          return _context5.abrupt("return", next(new ErrorResponse("User ".concat(req.params.id, " is not authorized to delete this bootcamp"), 401)));
+
+        case 7:
           // using the remove() method rather than findByIdAndDelete()
           //  allows of the use of the middleware in the Bootcamp model
           //  which cascade deletes all of the associated courses and other
@@ -160,7 +202,7 @@ exports.deleteBootcamp = asyncHandler(function _callee5(req, res, next) {
             data: {}
           });
 
-        case 7:
+        case 9:
         case "end":
           return _context5.stop();
       }
@@ -237,32 +279,40 @@ exports.bootcampPhotoUpload = asyncHandler(function _callee8(req, res, next) {
           return _context8.abrupt("return", next(new ErrorResponse("Bootcamp not found with id of ".concat(req.params.id), 404)));
 
         case 5:
-          if (req.files) {
+          if (!(bootcamp.user.toString() !== req.user.id && req.user.role !== 'admin')) {
             _context8.next = 7;
+            break;
+          }
+
+          return _context8.abrupt("return", next(new ErrorResponse("User ".concat(req.params.id, " is not authorized to update this bootcamp"), 401)));
+
+        case 7:
+          if (req.files) {
+            _context8.next = 9;
             break;
           }
 
           return _context8.abrupt("return", next(new ErrorResponse("Please upload a file", 400)));
 
-        case 7:
+        case 9:
           file = req.files.file; // Make sure the image is a photo
 
           if (file.mimetype.startsWith('image')) {
-            _context8.next = 10;
+            _context8.next = 12;
             break;
           }
 
           return _context8.abrupt("return", next(new ErrorResponse("Please upload an image file", 400)));
 
-        case 10:
+        case 12:
           if (!(file.size > process.env.MAX_FILE_UPLOAD)) {
-            _context8.next = 12;
+            _context8.next = 14;
             break;
           }
 
           return _context8.abrupt("return", next(new ErrorResponse("Image file size limit exceeded", 400)));
 
-        case 12:
+        case 14:
           // Custom file name to avoid overwriting
           file.name = "photo_".concat(bootcamp._id).concat(path.parse(file.name).ext); // Upload file to file system
 
@@ -299,7 +349,7 @@ exports.bootcampPhotoUpload = asyncHandler(function _callee8(req, res, next) {
             });
           });
 
-        case 14:
+        case 16:
         case "end":
           return _context8.stop();
       }

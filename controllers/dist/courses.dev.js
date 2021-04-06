@@ -96,31 +96,40 @@ exports.addCourse = asyncHandler(function _callee3(req, res, next) {
           // pulls the bootcamp ID from URL, finds it in DB, and
           //  adds it to req.body for the Course model
           req.body.bootcamp = req.params.bootcampId;
-          _context3.next = 3;
+          req.body.user = req.user.id;
+          _context3.next = 4;
           return regeneratorRuntime.awrap(Bootcamp.findById(req.params.bootcampId));
 
-        case 3:
+        case 4:
           bootcamp = _context3.sent;
 
           if (bootcamp) {
-            _context3.next = 6;
+            _context3.next = 7;
             break;
           }
 
           return _context3.abrupt("return", next(new ErrorResponse("No bootcamp with the id of ".concat(req.params.bootcampId), 404)));
 
-        case 6:
-          _context3.next = 8;
+        case 7:
+          if (!(bootcamp.user.toString() !== req.user.id && req.user.role !== 'admin')) {
+            _context3.next = 9;
+            break;
+          }
+
+          return _context3.abrupt("return", next(new ErrorResponse("User ".concat(req.user.id, " is not authorized to add a course to bootcamp ").concat(bootcamp._id), 401)));
+
+        case 9:
+          _context3.next = 11;
           return regeneratorRuntime.awrap(Course.create(req.body));
 
-        case 8:
+        case 11:
           course = _context3.sent;
           res.status(200).json({
             success: true,
             data: course
           });
 
-        case 10:
+        case 13:
         case "end":
           return _context3.stop();
       }
@@ -150,21 +159,29 @@ exports.updateCourse = asyncHandler(function _callee4(req, res, next) {
           return _context4.abrupt("return", next(new ErrorResponse("No course with the id of ".concat(req.params.idd), 404)));
 
         case 5:
-          _context4.next = 7;
+          if (!(bootcamp.user.toString() !== req.user.id && req.user.role !== 'admin')) {
+            _context4.next = 7;
+            break;
+          }
+
+          return _context4.abrupt("return", next(new ErrorResponse("User ".concat(req.user.id, " is not authorized to update course ").concat(course._id), 401)));
+
+        case 7:
+          _context4.next = 9;
           return regeneratorRuntime.awrap(Course.findByIdAndUpdate(req.params.id, req.body, {
             // new sends back the updated course
             "new": true,
             runValidators: true
           }));
 
-        case 7:
+        case 9:
           course = _context4.sent;
           res.status(200).json({
             success: true,
             data: course
           });
 
-        case 9:
+        case 11:
         case "end":
           return _context4.stop();
       }
@@ -193,16 +210,24 @@ exports.deleteCourse = asyncHandler(function _callee5(req, res, next) {
           return _context5.abrupt("return", next(new ErrorResponse("No course with the id of ".concat(req.params.idd), 404)));
 
         case 5:
-          _context5.next = 7;
-          return regeneratorRuntime.awrap(course.remove());
+          if (!(bootcamp.user.toString() !== req.user.id && req.user.role !== 'admin')) {
+            _context5.next = 7;
+            break;
+          }
+
+          return _context5.abrupt("return", next(new ErrorResponse("User ".concat(req.user.id, " is not authorized to delete course ").concat(course._id), 401)));
 
         case 7:
+          _context5.next = 9;
+          return regeneratorRuntime.awrap(course.remove());
+
+        case 9:
           res.status(200).json({
             success: true,
             data: {}
           });
 
-        case 8:
+        case 10:
         case "end":
           return _context5.stop();
       }
