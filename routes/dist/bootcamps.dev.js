@@ -16,6 +16,8 @@ var Bootcamp = require('../models/Bootcamp'); // Include other resource routers
 
 var courseRouter = require('./courses');
 
+var reviewsRouter = require('./reviews');
+
 var router = express.Router(); // Bring in advancedResults middleware
 
 var advancedResults = require('../middleware/advancedResults'); // Auth middleware
@@ -28,7 +30,8 @@ var _require2 = require('../middleware/auth'),
     authorize = _require2.authorize; // Reroute into other resource routers
 
 
-router.use('/:bootcampId/courses', courseRouter); // Here begins the bootcamps router
+router.use('/:bootcampId/courses', courseRouter);
+router.use('/:bootcampId/reviews', reviewsRouter); // Here begins the bootcamps router
 
 router.route('/radius/:zipcode/:distance').get(getBootcampsInRadius); // File upload
 

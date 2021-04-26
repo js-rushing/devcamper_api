@@ -33,6 +33,8 @@ var auth = require('./routes/auth');
 
 var users = require('./routes/users');
 
+var reviews = require('./routes/reviews');
+
 var app = express(); // Body parser
 
 app.use(express.json()); // Cookie parser
@@ -51,7 +53,8 @@ app.use(express["static"](path.join(__dirname, 'public'))); // Mount routers
 app.use('/api/v1/bootcamps', bootcamps);
 app.use('/api/v1/courses', courses);
 app.use('/api/v1/auth', auth);
-app.use('/api/v1/users', users); // Error Handler must be after Mount routers or won't catch
+app.use('/api/v1/users', users);
+app.use('/api/v1/reviews', reviews); // Error Handler must be after Mount routers or won't catch
 
 app.use(errorHandler);
 var PORT = process.env.PORT || 5000;

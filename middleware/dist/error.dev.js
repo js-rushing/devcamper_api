@@ -17,7 +17,7 @@ var errorHandler = function errorHandler(err, req, res, next) {
   // Mongoose bad ObjectId
 
   if (err.name === 'CastError') {
-    var message = "Bootcamp not found with id of ".concat(err.value);
+    var message = "Resource not found with id of ".concat(err.value);
     error = new ErrorResponse(message, 404);
   } // Mongoose duplicate key
 

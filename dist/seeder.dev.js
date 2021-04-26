@@ -17,7 +17,9 @@ var Bootcamp = require('./models/Bootcamp');
 
 var Course = require('./models/Course');
 
-var User = require('./models/User'); // Connect to DB
+var User = require('./models/User');
+
+var Review = require('./models/Review'); // Connect to DB
 
 
 mongoose.connect(process.env.MONGO_URI, {
@@ -29,7 +31,8 @@ mongoose.connect(process.env.MONGO_URI, {
 
 var bootcamps = JSON.parse(fs.readFileSync("".concat(__dirname, "/_data/bootcamps.json"), 'utf-8'));
 var courses = JSON.parse(fs.readFileSync("".concat(__dirname, "/_data/courses.json"), 'utf-8'));
-var users = JSON.parse(fs.readFileSync("".concat(__dirname, "/_data/users.json"), 'utf-8')); // Import into DB
+var users = JSON.parse(fs.readFileSync("".concat(__dirname, "/_data/users.json"), 'utf-8'));
+var reviews = JSON.parse(fs.readFileSync("".concat(__dirname, "/_data/reviews.json"), 'utf-8')); // Import into DB
 
 var importData = function importData() {
   return regeneratorRuntime.async(function importData$(_context) {
@@ -49,22 +52,26 @@ var importData = function importData() {
           return regeneratorRuntime.awrap(User.create(users));
 
         case 7:
+          _context.next = 9;
+          return regeneratorRuntime.awrap(Review.create(reviews));
+
+        case 9:
           console.log('Data Imported...'.green.inverse);
           process.exit();
-          _context.next = 14;
+          _context.next = 16;
           break;
 
-        case 11:
-          _context.prev = 11;
+        case 13:
+          _context.prev = 13;
           _context.t0 = _context["catch"](0);
           console.error(_context.t0);
 
-        case 14:
+        case 16:
         case "end":
           return _context.stop();
       }
     }
-  }, null, null, [[0, 11]]);
+  }, null, null, [[0, 13]]);
 }; // Delete data
 
 
@@ -86,22 +93,26 @@ var deleteData = function deleteData() {
           return regeneratorRuntime.awrap(User.deleteMany());
 
         case 7:
+          _context2.next = 9;
+          return regeneratorRuntime.awrap(Review.deleteMany());
+
+        case 9:
           console.log('Data Destroyed...'.red.inverse);
           process.exit();
-          _context2.next = 14;
+          _context2.next = 16;
           break;
 
-        case 11:
-          _context2.prev = 11;
+        case 13:
+          _context2.prev = 13;
           _context2.t0 = _context2["catch"](0);
           console.error(_context2.t0);
 
-        case 14:
+        case 16:
         case "end":
           return _context2.stop();
       }
     }
-  }, null, null, [[0, 11]]);
+  }, null, null, [[0, 13]]);
 };
 
 if (process.argv[2] === '-i') {
