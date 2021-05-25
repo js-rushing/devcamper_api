@@ -5,6 +5,7 @@ var express = require('express');
 var _require = require('../controllers/auth'),
     register = _require.register,
     login = _require.login,
+    logout = _require.logout,
     getMe = _require.getMe,
     forgotPassword = _require.forgotPassword,
     resetPassword = _require.resetPassword,
@@ -18,6 +19,7 @@ var _require2 = require('../middleware/auth'),
 
 router.post('/register', register);
 router.post('/login', login);
+router.get('/logout', logout);
 router.get('/me', protect, getMe);
 router.put('/updatedetails', protect, updateDetails);
 router.put('/updatepassword', protect, updatePassword);

@@ -14,6 +14,18 @@ var fileupload = require('express-fileupload');
 
 var cookieParser = require('cookie-parser');
 
+var mongoSanitize = require('express-mongo-sanitize');
+
+var helmet = require('helmet');
+
+var xssClean = require('xss-clean');
+
+var rateLimit = require('express-rate-limit');
+
+var hpp = require('hpp');
+
+var cors = require('cors');
+
 var errorHandler = require('./middleware/error');
 
 var connectDB = require('./config/db'); // Load env vars
@@ -46,7 +58,24 @@ if (process.env.NODE_ENV === 'development') {
 } // File uploading
 
 
-app.use(fileupload()); // Set static folder
+app.use(fileupload()); // Sanitize data
+
+app.use(mongoSanitize()); // Set security headers
+
+app.use(helmet()); // Prevent cross site scripting XSS attacks
+
+app.use(xssClean()); // Request rate limiting
+
+var limiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  // 10 mins,
+  max: 100
+});
+app.use(limiter); // Prevent http param pollution
+
+app.use(hpp()); // Enable CORS
+
+app.use(cors()); // Set static folder
 
 app.use(express["static"](path.join(__dirname, 'public'))); // Mount routers
 

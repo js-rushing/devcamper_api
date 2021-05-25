@@ -100,21 +100,45 @@ exports.login = asyncHandler(function _callee2(req, res, next) {
       }
     }
   });
-}); // @desc    Get current logged in user
-// @route   GET /api/v1/auth/me
+}); // @desc    Log out user / clear cookie
+// @route   GET /api/v1/auth/logout
 // @access  Private
 
-exports.getMe = asyncHandler(function _callee3(req, res, next) {
-  var user;
+exports.logout = asyncHandler(function _callee3(req, res, next) {
   return regeneratorRuntime.async(function _callee3$(_context3) {
     while (1) {
       switch (_context3.prev = _context3.next) {
         case 0:
-          _context3.next = 2;
+          res.cookie('token', 'none', {
+            expires: new Date(Date.now() + 10 * 1000),
+            httpOnly: true
+          });
+          res.status(200).json({
+            success: true,
+            data: {}
+          });
+
+        case 2:
+        case "end":
+          return _context3.stop();
+      }
+    }
+  });
+}); // @desc    Get current logged in user
+// @route   GET /api/v1/auth/me
+// @access  Private
+
+exports.getMe = asyncHandler(function _callee4(req, res, next) {
+  var user;
+  return regeneratorRuntime.async(function _callee4$(_context4) {
+    while (1) {
+      switch (_context4.prev = _context4.next) {
+        case 0:
+          _context4.next = 2;
           return regeneratorRuntime.awrap(User.findById(req.user.id));
 
         case 2:
-          user = _context3.sent;
+          user = _context4.sent;
           res.status(200).json({
             success: true,
             data: user
@@ -122,7 +146,7 @@ exports.getMe = asyncHandler(function _callee3(req, res, next) {
 
         case 4:
         case "end":
-          return _context3.stop();
+          return _context4.stop();
       }
     }
   });
@@ -130,24 +154,24 @@ exports.getMe = asyncHandler(function _callee3(req, res, next) {
 // @route   PUT /api/v1/auth/updatedetails
 // @access  Private
 
-exports.updateDetails = asyncHandler(function _callee4(req, res, next) {
+exports.updateDetails = asyncHandler(function _callee5(req, res, next) {
   var fieldsToUpdate, user;
-  return regeneratorRuntime.async(function _callee4$(_context4) {
+  return regeneratorRuntime.async(function _callee5$(_context5) {
     while (1) {
-      switch (_context4.prev = _context4.next) {
+      switch (_context5.prev = _context5.next) {
         case 0:
           fieldsToUpdate = {
             name: req.body.name,
             email: req.body.email
           };
-          _context4.next = 3;
+          _context5.next = 3;
           return regeneratorRuntime.awrap(User.findByIdAndUpdate(req.user.id, fieldsToUpdate, {
             "new": true,
             runValidators: true
           }));
 
         case 3:
-          user = _context4.sent;
+          user = _context5.sent;
           res.status(200).json({
             success: true,
             data: user
@@ -155,7 +179,7 @@ exports.updateDetails = asyncHandler(function _callee4(req, res, next) {
 
         case 5:
         case "end":
-          return _context4.stop();
+          return _context5.stop();
       }
     }
   });
@@ -163,31 +187,31 @@ exports.updateDetails = asyncHandler(function _callee4(req, res, next) {
 // @route   PUT /api/v1/auth/updatepassword
 // @access  Private
 
-exports.updatePassword = asyncHandler(function _callee5(req, res, next) {
+exports.updatePassword = asyncHandler(function _callee6(req, res, next) {
   var user;
-  return regeneratorRuntime.async(function _callee5$(_context5) {
+  return regeneratorRuntime.async(function _callee6$(_context6) {
     while (1) {
-      switch (_context5.prev = _context5.next) {
+      switch (_context6.prev = _context6.next) {
         case 0:
-          _context5.next = 2;
+          _context6.next = 2;
           return regeneratorRuntime.awrap(User.findById(req.user.id).select('+password'));
 
         case 2:
-          user = _context5.sent;
-          _context5.next = 5;
+          user = _context6.sent;
+          _context6.next = 5;
           return regeneratorRuntime.awrap(user.matchPassword(req.body.currentPassword));
 
         case 5:
-          if (_context5.sent) {
-            _context5.next = 7;
+          if (_context6.sent) {
+            _context6.next = 7;
             break;
           }
 
-          return _context5.abrupt("return", next(new ErrorResponse('Password is incorrect', 401)));
+          return _context6.abrupt("return", next(new ErrorResponse('Password is incorrect', 401)));
 
         case 7:
           user.password = req.body.newPassword;
-          _context5.next = 10;
+          _context6.next = 10;
           return regeneratorRuntime.awrap(user.save());
 
         case 10:
@@ -195,7 +219,7 @@ exports.updatePassword = asyncHandler(function _callee5(req, res, next) {
 
         case 11:
         case "end":
-          return _context5.stop();
+          return _context6.stop();
       }
     }
   });
@@ -203,31 +227,31 @@ exports.updatePassword = asyncHandler(function _callee5(req, res, next) {
 // @route   POST /api/v1/auth/forgotpassword
 // @access  Public
 
-exports.forgotPassword = asyncHandler(function _callee6(req, res, next) {
+exports.forgotPassword = asyncHandler(function _callee7(req, res, next) {
   var user, resetToken, resetURL, message;
-  return regeneratorRuntime.async(function _callee6$(_context6) {
+  return regeneratorRuntime.async(function _callee7$(_context7) {
     while (1) {
-      switch (_context6.prev = _context6.next) {
+      switch (_context7.prev = _context7.next) {
         case 0:
-          _context6.next = 2;
+          _context7.next = 2;
           return regeneratorRuntime.awrap(User.findOne({
             email: req.body.email
           }));
 
         case 2:
-          user = _context6.sent;
+          user = _context7.sent;
 
           if (user) {
-            _context6.next = 5;
+            _context7.next = 5;
             break;
           }
 
-          return _context6.abrupt("return", next(new ErrorResponse("There is no user with that email", 404)));
+          return _context7.abrupt("return", next(new ErrorResponse("There is no user with that email", 404)));
 
         case 5:
           // Get reset token
           resetToken = user.getResetPasswordToken();
-          _context6.next = 8;
+          _context7.next = 8;
           return regeneratorRuntime.awrap(user.save({
             validateBeforeSave: false
           }));
@@ -241,8 +265,8 @@ exports.forgotPassword = asyncHandler(function _callee6(req, res, next) {
            */
 
           message = "You are receiving this email because you (or someone else) has requested the reset of a password.  Please make a PUT request to: \n\n ".concat(resetURL);
-          _context6.prev = 10;
-          _context6.next = 13;
+          _context7.prev = 10;
+          _context7.next = 13;
           return regeneratorRuntime.awrap(sendEmail({
             email: user.email,
             subject: 'Password reset token',
@@ -254,26 +278,26 @@ exports.forgotPassword = asyncHandler(function _callee6(req, res, next) {
             success: true,
             data: 'Email sent'
           });
-          _context6.next = 24;
+          _context7.next = 24;
           break;
 
         case 16:
-          _context6.prev = 16;
-          _context6.t0 = _context6["catch"](10);
-          console.log(_context6.t0);
+          _context7.prev = 16;
+          _context7.t0 = _context7["catch"](10);
+          console.log(_context7.t0);
           user.resetPasswordToken = undefined;
           user.resetPasswordExpire = undefined;
-          _context6.next = 23;
+          _context7.next = 23;
           return regeneratorRuntime.awrap(user.save({
             validateBeforeSave: false
           }));
 
         case 23:
-          return _context6.abrupt("return", next(new ErrorResponse('Email could not be sent', 500)));
+          return _context7.abrupt("return", next(new ErrorResponse('Email could not be sent', 500)));
 
         case 24:
         case "end":
-          return _context6.stop();
+          return _context7.stop();
       }
     }
   }, null, null, [[10, 16]]);
@@ -281,15 +305,15 @@ exports.forgotPassword = asyncHandler(function _callee6(req, res, next) {
 // @route   PUT /api/v1/auth/resetpassword/:resettoken
 // @access  Public
 
-exports.resetPassword = asyncHandler(function _callee7(req, res, next) {
+exports.resetPassword = asyncHandler(function _callee8(req, res, next) {
   var resetPasswordToken, user;
-  return regeneratorRuntime.async(function _callee7$(_context7) {
+  return regeneratorRuntime.async(function _callee8$(_context8) {
     while (1) {
-      switch (_context7.prev = _context7.next) {
+      switch (_context8.prev = _context8.next) {
         case 0:
           // Get hashed token
           resetPasswordToken = crypto.createHash('sha256').update(req.params.resettoken).digest('hex');
-          _context7.next = 3;
+          _context8.next = 3;
           return regeneratorRuntime.awrap(User.findOne({
             resetPasswordToken: resetPasswordToken,
             // $gt is greater than
@@ -299,21 +323,21 @@ exports.resetPassword = asyncHandler(function _callee7(req, res, next) {
           }));
 
         case 3:
-          user = _context7.sent;
+          user = _context8.sent;
 
           if (user) {
-            _context7.next = 6;
+            _context8.next = 6;
             break;
           }
 
-          return _context7.abrupt("return", next(new ErrorResponse('Invalid token', 400)));
+          return _context8.abrupt("return", next(new ErrorResponse('Invalid token', 400)));
 
         case 6:
           // Set new password
           user.password = req.body.password;
           user.resetPasswordToken = undefined;
           user.resetPasswordExpire = undefined;
-          _context7.next = 11;
+          _context8.next = 11;
           return regeneratorRuntime.awrap(user.save());
 
         case 11:
@@ -321,7 +345,7 @@ exports.resetPassword = asyncHandler(function _callee7(req, res, next) {
 
         case 12:
         case "end":
-          return _context7.stop();
+          return _context8.stop();
       }
     }
   });
